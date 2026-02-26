@@ -1,0 +1,81 @@
+services:
+
+  # ==============================
+  # SERVIÇO DO SQL SERVER
+  # ==============================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: agendaapp-sqlserver
+    restart: always
+
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=SuaSenhaForte@123
+      - MSSQL_PID=Developer
+
+    ports:
+      - "1434:1433"   # Porta padrão do SQL Server
+
+    volumes:
+      - sql_data:/var/opt/mssql
+
+    networks:
+      - agenda-network
+
+
+  # ==============================
+  # SERVIÇO DA API (ASP.NET Core)
+  # ==============================
+  agendaapp-api:
+    container_name: agendaapp-api
+
+    build:
+      context: .
+      dockerfile: AgendaApp.API/Dockerfile
+
+    ports:
+      - "5199:8080"
+
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+
+    depends_on:
+      - sqlserver   # API depende do banco
+
+    networks:
+      - agenda-network
+
+
+  # ======================================
+  # SERVIÇO DA UI (Blazor WebAssembly)
+  # ======================================
+  agendaapp-ui:
+    container_name: agendaapp-ui
+
+    build:
+      context: .
+      dockerfile: AgendaApp.UI/Dockerfile
+
+    ports:
+      - "8080:80"
+
+    depends_on:
+      - agendaapp-api
+
+    networks:
+      - agenda-network
+
+
+# ======================================
+# VOLUME PARA PERSISTÊNCIA DO BANCO
+# ======================================
+volumes:
+  sql_data:
+
+
+# ======================================
+# REDE CUSTOMIZADA DOCKER
+# ======================================
+networks:
+  agenda-network:
+    driver: bridge

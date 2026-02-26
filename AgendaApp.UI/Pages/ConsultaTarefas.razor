@@ -1,0 +1,95 @@
+﻿@page "/consulta-tarefas"
+
+<div class="m-3">
+
+    <h4>Consulta de tarefas</h4>
+    <p>Informe as datas para consultar tarefas em sua agenda.</p>
+
+    <EditForm Model="formConsulta" OnValidSubmit="@Consultar">
+
+        <DataAnnotationsValidator/>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                 <InputText type="date" @bind-Value="formConsulta.DataMin" class="form-control"/>
+                 <div class="text-danger">
+                     <ValidationMessage For="@(() => formConsulta.DataMin)"/>
+                 </div>
+            </div>
+            <div class="col-md-3">
+                 <InputText type="date" @bind-Value="formConsulta.DataMax" class="form-control"/>
+                 <div class="text-danger">
+                     <ValidationMessage For="@(() => formConsulta.DataMax)"/>
+                 </div>
+            </div>
+            <div class="col-md-6">
+                <input type="submit" class="btn btn-success" value="Pesquisar tarefas"/>
+            </div>
+        </div>
+
+    </EditForm>
+
+    <div class="mb-3">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr>
+                    <th>Nome da tarefa</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Prioridade</th>
+                    <th>Descrição</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td witdh="180">
+                        <button class="btn btn-primary btn-sm me-1"
+                            @onclick="(() => OnEdit(Guid.NewGuid().ToString()))">
+                            Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm">
+                            Excluir
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6">
+                        Quantidade de tarefas: 0
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+
+@using AgendaApp.UI.Forms
+
+@inject NavigationManager Navigation
+
+@code {
+
+    //Atributo para capturar o formulário
+    private ConsultaTarefasForm formConsulta = new();
+
+    //Função para capturar o SUBMIT do formulário
+    protected async Task Consultar()
+    {
+
+    }
+
+    //Função para navegar para a página de edição
+    protected async Task OnEdit(string id)
+    {
+        //Navegar para a página de edição
+        Navigation.NavigateTo("/edicao-tarefas/" + id);
+    }
+}

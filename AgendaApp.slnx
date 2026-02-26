@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/1 - Presentation/">
+    <Project Path="AgendaApp.UI/AgendaApp.UI.csproj" />
+  </Folder>
+  <Folder Name="/2 - Application/">
+    <Project Path="AgendaApp.API/AgendaApp.API.csproj" Id="1cafba66-1467-4da0-abf4-684551dd022f" />
+  </Folder>
+  <Folder Name="/3 - Domain/">
+    <Project Path="AgendaApp.Domain/AgendaApp.Domain.csproj" Id="4a7520ec-7dd0-4765-aa2d-06d2cc05e0d4" />
+  </Folder>
+  <Folder Name="/4 - Infrastructure/">
+    <Project Path="AgendaApp.Infra.Data/AgendaApp.Infra.Data.csproj" Id="901adabd-a7d6-4d92-b3e7-1f5e728ab963" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Docker-compose.yml" />
+  </Folder>
+</Solution>
