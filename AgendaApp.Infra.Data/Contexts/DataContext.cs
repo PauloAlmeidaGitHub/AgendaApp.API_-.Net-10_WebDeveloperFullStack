@@ -11,7 +11,7 @@ namespace AgendaApp.Infra.Data.Contexts
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //Connectionstring do banco de dados
-            optionsBuilder.UseSqlServer("Data Source=localhost,1434;Initial Catalog=DBAgenda;User ID=sa;Password=SuaSenhaForte@123;Encrypt=False");
+            optionsBuilder.UseSqlServer("Data Source=sqlserver,1433;Initial Catalog=DBAgenda;User ID=sa;Password=SuaSenhaForte@123;Encrypt=False;TrustServerCertificate=True");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
