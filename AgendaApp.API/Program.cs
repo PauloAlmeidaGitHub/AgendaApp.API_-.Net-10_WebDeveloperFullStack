@@ -14,6 +14,19 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//CORS - permitir tudo
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        });
+});
+
 //Injeções de dependência
 builder.Services.AddTransient<ITarefaService, TarefaService>();
 builder.Services.AddTransient<ITarefaRepository, TarefaRepository>();
@@ -25,6 +38,9 @@ app.MapOpenApi();
 //Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
+
+//Habilitando CORS
+app.UseCors("AllowAll");
 
 //Scalar
 app.MapScalarApiReference(s => s.WithTheme(ScalarTheme.BluePlanet));

@@ -1,10 +1,146 @@
 ﻿@page "/edicao-tarefas/{id}"
 
-<h3>EdicaoTarefas</h3>
+<div class="m-3">
+
+    <h4>Edição de tarefas</h4>
+    <p>Utilize o formulário para alterar os dados da tarefa em sua agenda.</p>
+
+    @if (!string.IsNullOrEmpty(mensagemSucesso))
+    {
+        <div class="alert alert-success">
+            <strong>@mensagemSucesso</strong>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">
+            <strong>@mensagemErro</strong>
+        </div>
+    }
+
+    @* Formulário de cadastro *@
+    <EditForm Model="formEdicao" OnValidSubmit="@Atualizar">
+
+        @* Ativar as validações *@
+        <DataAnnotationsValidator />
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>Nome da tarefa:</label>
+                <InputText @bind-Value="formEdicao.Nome" class="form-control"
+                           placeholder="Digite o nome da tarefa" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formEdicao.Nome)" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label>Data:</label>
+                <InputText type="date" @bind-Value="formEdicao.Data" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formEdicao.Data)" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label>Hora:</label>
+                <InputText type="time" @bind-Value="formEdicao.Hora" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formEdicao.Hora)" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label>Prioridade:</label>
+                <InputSelect @bind-Value="formEdicao.Prioridade" class="form-select">
+                    <option value="">Escolha uma opção</option>
+                    <option value="BAIXA">Baixa</option>
+                    <option value="MEDIA">Média</option>
+                    <option value="ALTA">Alta</option>
+                </InputSelect>
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formEdicao.Prioridade)" />
+                </div>
+            </div>
+            <div class="col-md-9">
+                <label>Descrição da tarefa:</label>
+                <InputTextArea @bind-Value="formEdicao.Descricao" class="form-control"></InputTextArea>
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formEdicao.Descricao)" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <input type="submit" class="btn btn-primary" value="Salvar alterações" />
+            </div>
+        </div>
+
+    </EditForm>
+
+</div>
+
+@using AgendaApp.UI.Forms
+@using AgendaApp.UI.Dtos
+@using Newtonsoft.Json
+
+@inject HttpClient Http
 
 @code {
 
+    //Capturar o ID enviado na URL da navegação
     [Parameter]
-    public string id { get; set; }
+    public string? id { get; set; }
 
+    //Declarar um atributo para o formulário de edição
+    private CadastroTarefasForm formEdicao = new();
+
+    //Atributos para exibir mensagem de sucesso ou de erro
+    private string mensagemSucesso;
+    private string mensagemErro;
+
+    //Função executado ao abrir a página
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/tarefas/" + id);
+            var json = await response.Content.ReadAsStringAsync();
+            var tarefa = JsonConvert.DeserializeObject<TarefaDto>(json);
+
+            //Preencher os campos do formulário
+            formEdicao.Nome = tarefa.Nome;
+            formEdicao.Data = tarefa.Data;
+            formEdicao.Hora = tarefa.Hora;
+            formEdicao.Descricao = tarefa.Descricao;
+            formEdicao.Prioridade = tarefa.Prioridade;
+        }
+        catch (Exception e)
+        {
+            mensagemErro = "Erro: " + e.Message;
+        }
+    }
+
+    //Função para realizar o cadastro da tarefa
+    protected async Task Atualizar()
+    {
+        //Limpar as mensagens
+        mensagemSucesso = string.Empty;
+        mensagemErro = string.Empty;
+
+        //Enviando uma chamada HTTP POST para a API cadastrar tarefa
+        var response = await Http.PutAsJsonAsync("api/tarefas/" + id, formEdicao);
+
+        //Verificar o resultado
+        if (response.IsSuccessStatusCode)
+        {
+            mensagemSucesso = $"Tarefa '{formEdicao.Nome}' atualizada com sucesso.";
+        }
+        else
+        {
+            mensagemErro = "Falha ao atualizar a tarefa.";
+        }
+    }
 }
+

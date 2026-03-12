@@ -1,5 +1,13 @@
 ﻿@page "/consulta-tarefas"
 
+@using AgendaApp.UI.Forms
+@using AgendaApp.UI.Dtos
+@using Newtonsoft.Json
+
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
 <div class="m-3">
 
     <h4>Consulta de tarefas</h4>
@@ -7,89 +15,229 @@
 
     <EditForm Model="formConsulta" OnValidSubmit="@Consultar">
 
-        <DataAnnotationsValidator/>
+        <DataAnnotationsValidator />
 
         <div class="row mb-3">
+
             <div class="col-md-3">
-                 <InputText type="date" @bind-Value="formConsulta.DataMin" class="form-control"/>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formConsulta.DataMin)"/>
-                 </div>
+                <InputText type="date" @bind-Value="formConsulta.DataMin" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formConsulta.DataMin)" />
+                </div>
             </div>
+
             <div class="col-md-3">
-                 <InputText type="date" @bind-Value="formConsulta.DataMax" class="form-control"/>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formConsulta.DataMax)"/>
-                 </div>
+                <InputText type="date" @bind-Value="formConsulta.DataMax" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formConsulta.DataMax)" />
+                </div>
             </div>
+
             <div class="col-md-6">
-                <input type="submit" class="btn btn-success" value="Pesquisar tarefas"/>
+                <input type="submit" class="btn btn-success" value="Pesquisar tarefas" />
             </div>
+
         </div>
 
     </EditForm>
 
-    <div class="mb-3">
-        <table class="table table-sm table-hover">
-            <thead>
-                <tr>
-                    <th>Nome da tarefa</th>
-                    <th>Data</th>
-                    <th>Hora</th>
-                    <th>Prioridade</th>
-                    <th>Descrição</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td witdh="180">
-                        <button class="btn btn-primary btn-sm me-1"
-                            @onclick="(() => OnEdit(Guid.NewGuid().ToString()))">
-                            Editar
-                        </button>
-                        <button class="btn btn-danger btn-sm">
-                            Excluir
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="6">
-                        Quantidade de tarefas: 0
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+    @if (!string.IsNullOrEmpty(mensagemSucesso))
+    {
+        <div class="alert alert-success">
+            <strong>@mensagemSucesso</strong>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">
+            <strong>@mensagemErro</strong>
+        </div>
+    }
+
+    @if (tarefas?.Any() == true)
+    {
+        <div class="mb-3">
+
+            <table class="table table-sm table-hover">
+
+                <thead>
+                    <tr>
+                        <th>Nome da tarefa</th>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Prioridade</th>
+                        <th>Descrição</th>
+                        <th width="180">Ações</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var t in tarefas)
+                    {
+                        <tr>
+                            <td>@t.Nome</td>
+                            <td>@t.Data</td>
+                            <td>@t.Hora</td>
+                            <td>@t.Prioridade</td>
+                            <td>@t.Descricao</td>
+                            <td>
+
+                                <button class="btn btn-primary btn-sm me-1"
+                                        @onclick="(() => OnEdit(t.Id))">
+                                    Editar
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="(() => OnDelete(t.Id))">
+                                    Excluir
+                                </button>
+
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+                <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            Total de tarefas: @totalRecords
+                        </td>
+                    </tr>
+                </tfoot>
+
+            </table>
+
+        </div>
+
+        <div class="mt-3">
+
+            <button class="btn btn-secondary btn-sm me-2"
+                    @onclick="PaginaAnterior"
+                    disabled="@(pageIndex == 1)">
+                Anterior
+            </button>
+
+            <span>
+                Página @pageIndex de @totalPages
+            </span>
+
+            <button class="btn btn-secondary btn-sm ms-2"
+                    @onclick="ProximaPagina"
+                    disabled="@(pageIndex == totalPages)">
+                Próxima
+            </button>
+
+        </div>
+    }
 
 </div>
 
-@using AgendaApp.UI.Forms
-
-@inject NavigationManager Navigation
-
 @code {
 
-    //Atributo para capturar o formulário
+    // formulário
     private ConsultaTarefasForm formConsulta = new();
 
-    //Função para capturar o SUBMIT do formulário
+    // dados
+    private List<TarefaDto> tarefas = new();
+
+    // mensagens
+    private string mensagemSucesso = string.Empty;
+    private string mensagemErro = string.Empty;
+
+    // paginação
+    private int pageIndex = 1;
+    private int pageSize = 5;
+    private int totalRecords = 0;
+    private int totalPages = 0;
+
+    // consulta
     protected async Task Consultar()
     {
+        mensagemSucesso = string.Empty;
+        mensagemErro = string.Empty;
 
+        try
+        {
+            var dataMin = formConsulta.DataMin;
+            var dataMax = formConsulta.DataMax;
+
+            var response = await Http.GetAsync(
+                $"api/tarefas/{dataMin}/{dataMax}?page={pageIndex}&pageSize={pageSize}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+
+                var result = JsonConvert.DeserializeObject<PaginacaoDto<TarefaDto>>(json);
+
+                if (result != null)
+                {
+                    tarefas = result.Data ?? new List<TarefaDto>();
+                    totalRecords = result.TotalRecords;
+                    totalPages = result.TotalPages;
+                }
+            }
+            else
+            {
+                mensagemErro = "Falha ao consultar tarefas.";
+            }
+        }
+        catch
+        {
+            mensagemErro = "Erro ao acessar a API.";
+        }
     }
 
-    //Função para navegar para a página de edição
-    protected async Task OnEdit(string id)
+    private async Task ProximaPagina()
     {
-        //Navegar para a página de edição
+        if (pageIndex < totalPages)
+        {
+            pageIndex++;
+            await Consultar();
+        }
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (pageIndex > 1)
+        {
+            pageIndex--;
+            await Consultar();
+        }
+    }
+
+    private void OnEdit(Guid id)
+    {
         Navigation.NavigateTo("/edicao-tarefas/" + id);
+    }
+
+    private async Task OnDelete(Guid id)
+    {
+        try
+        {
+            var confirmacao = await JSRuntime.InvokeAsync<bool>
+                                ("confirm", "Deseja realmente excluir esta tarefa?");
+
+            if (confirmacao)
+            {
+                var response = await Http.DeleteAsync($"api/tarefas/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await Consultar();
+                    await JSRuntime.InvokeAsync<object>("alert", "Tarefa excluída com sucesso.");
+                }
+                else
+                {
+                    mensagemErro = "Erro ao excluir tarefa.";
+                }
+            }
+        }
+        catch
+        {
+            mensagemErro = "Erro ao acessar a API.";
+        }
     }
 }

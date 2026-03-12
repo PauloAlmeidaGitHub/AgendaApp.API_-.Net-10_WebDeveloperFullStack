@@ -1,4 +1,5 @@
 ﻿using AgendaApp.Domain.Entities;
+using AgendaApp.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,8 +14,12 @@ namespace AgendaApp.Domain.Interfaces
 
         void Excluir(Guid id);
 
-        List<Tarefa> Consultar(DateOnly dataMin, DateOnly dataMax);
+        List<Tarefa> Consultar(DateOnly dataMin, DateOnly dataMax, int page, int pageSize);
+
+        int Count(DateOnly dataMin, DateOnly dataMax);
 
         Tarefa? ObterPorId(Guid id);
+
+        DashboardModel ObterDashboard(DateOnly dataMin, DateOnly dataMax);
     }
 }

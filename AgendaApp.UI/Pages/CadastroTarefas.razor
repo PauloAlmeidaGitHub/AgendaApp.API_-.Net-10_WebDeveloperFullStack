@@ -5,62 +5,75 @@
     <h4>Cadastro de tarefas</h4>
     <p>Preencha o formulário para incluir uma tarefa em sua agenda.</p>
 
+    @if (!string.IsNullOrEmpty(mensagemSucesso))
+    {
+        <div class="alert alert-success">
+            <strong>@mensagemSucesso</strong>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">
+            <strong>@mensagemErro</strong>
+        </div>
+    }
+
     @* Formulário de cadastro *@
     <EditForm Model="formCadastro" OnValidSubmit="@Cadastrar">
 
         @* Ativar as validações *@
-        <DataAnnotationsValidator/>
+        <DataAnnotationsValidator />
 
         <div class="row mb-3">
             <div class="col-md-6">
-                 <label>Nome da tarefa:</label>
-                 <InputText @bind-Value="formCadastro.Nome" class="form-control"
-                    placeholder="Digite o nome da tarefa"/>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formCadastro.Nome)"/>
-                 </div>
+                <label>Nome da tarefa:</label>
+                <InputText @bind-Value="formCadastro.Nome" class="form-control"
+                           placeholder="Digite o nome da tarefa" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formCadastro.Nome)" />
+                </div>
             </div>
             <div class="col-md-3">
                 <label>Data:</label>
-                 <InputText type="date" @bind-Value="formCadastro.Data" class="form-control"/>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formCadastro.Data)"/>
-                 </div>
+                <InputText type="date" @bind-Value="formCadastro.Data" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formCadastro.Data)" />
+                </div>
             </div>
             <div class="col-md-3">
-                 <label>Hora:</label>
-                 <InputText type="time" @bind-Value="formCadastro.Hora" class="form-control"/>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formCadastro.Hora)"/>
-                 </div>
+                <label>Hora:</label>
+                <InputText type="time" @bind-Value="formCadastro.Hora" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formCadastro.Hora)" />
+                </div>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-md-3">
-                 <label>Prioridade:</label>
-                 <InputSelect @bind-Value="formCadastro.Prioridade" class="form-select">
-                     <option value="">Escolha uma opção</option>
-                     <option value="1">Baixa</option>
-                     <option value="2">Média</option>
-                     <option value="3">Alta</option>
-                 </InputSelect>
-                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formCadastro.Prioridade)"/>
-                 </div>    
+                <label>Prioridade:</label>
+                <InputSelect @bind-Value="formCadastro.Prioridade" class="form-select">
+                    <option value="">Escolha uma opção</option>
+                    <option value="1">Baixa</option>
+                    <option value="2">Média</option>
+                    <option value="3">Alta</option>
+                </InputSelect>
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formCadastro.Prioridade)" />
+                </div>
             </div>
             <div class="col-md-9">
                 <label>Descrição da tarefa:</label>
                 <InputTextArea @bind-Value="formCadastro.Descricao" class="form-control"></InputTextArea>
                 <div class="text-danger">
-                     <ValidationMessage For="@(() => formCadastro.Descricao)"/>
-                 </div>   
+                    <ValidationMessage For="@(() => formCadastro.Descricao)" />
+                </div>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-md-12">
-                <input type="submit" class="btn btn-success" value="Realizar Cadastro"/>
+                <input type="submit" class="btn btn-success" value="Realizar Cadastro" />
             </div>
         </div>
 
@@ -70,14 +83,36 @@
 
 @using AgendaApp.UI.Forms
 
+@inject HttpClient Http
+
 @code {
 
     //Declarar um atributo para o formulário de cadastro
     private CadastroTarefasForm formCadastro = new();
 
+    //Atributos para exibir mensagem de sucesso ou de erro
+    private string mensagemSucesso;
+    private string mensagemErro;
+
     //Função para realizar o cadastro da tarefa
     protected async Task Cadastrar()
     {
-        
+        //Limpar as mensagens
+        mensagemSucesso = string.Empty;
+        mensagemErro = string.Empty;
+
+        //Enviando uma chamada HTTP POST para a API cadastrar tarefa
+        var response = await Http.PostAsJsonAsync("api/tarefas", formCadastro);
+
+        //Verificar o resultado
+        if (response.IsSuccessStatusCode)
+        {
+            mensagemSucesso = $"Tarefa '{formCadastro.Nome}' cadastrada com sucesso.";
+            formCadastro = new CadastroTarefasForm(); //limpar o formulário
+        }
+        else
+        {
+            mensagemErro = "Falha ao cadastrar a tarefa.";
+        }
     }
 }

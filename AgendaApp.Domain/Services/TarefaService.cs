@@ -1,6 +1,7 @@
 ﻿using AgendaApp.Domain.Entities;
 using AgendaApp.Domain.Interfaces;
 using AgendaApp.Domain.Interfaces.Repositories;
+using AgendaApp.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,15 +27,25 @@ namespace AgendaApp.Domain.Services
             _tarefaRepository.Update(tarefa);
         }
 
-        public List<Tarefa> Consultar(DateOnly dataMin, DateOnly dataMax)
+        public List<Tarefa> Consultar(DateOnly dataMin, DateOnly dataMax, int page, int pageSize)
         {
-            return _tarefaRepository.Find(dataMin, dataMax);
+            return _tarefaRepository.Find(dataMin, dataMax, page, pageSize);
+        }
+
+        public int Count(DateOnly dataMin, DateOnly dataMax)
+        {
+            return _tarefaRepository.Count(dataMin, dataMax);
         }
 
         public void Excluir(Guid id)
         {
             var tarefa = _tarefaRepository.FindById(id);
             _tarefaRepository.Delete(tarefa);
+        }
+
+        public DashboardModel ObterDashboard(DateOnly dataMin, DateOnly dataMax)
+        {
+            return _tarefaRepository.GenerateDashboard(dataMin, dataMax);
         }
 
         public Tarefa? ObterPorId(Guid id)

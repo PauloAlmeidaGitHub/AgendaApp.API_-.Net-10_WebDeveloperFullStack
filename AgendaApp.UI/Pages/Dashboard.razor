@@ -1,7 +1,128 @@
 ﻿@page "/"
 
-<h3>Dashboard</h3>
+
+@using AgendaApp.UI.Forms
+@using AgendaApp.UI.Dtos
+@using Newtonsoft.Json
+
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<div class="m-3">
+
+    <h4>Dashboard principal</h4>
+    <p>Seja bem vindo a agenda de tarefas.</p>
+
+    <EditForm Model="formConsulta" OnValidSubmit="@Consultar">
+
+        <DataAnnotationsValidator />
+
+        <div class="row mb-4">
+
+            <div class="col-md-3">
+                <InputText type="date" @bind-Value="formConsulta.DataMin" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formConsulta.DataMin)" />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <InputText type="date" @bind-Value="formConsulta.DataMax" class="form-control" />
+                <div class="text-danger">
+                    <ValidationMessage For="@(() => formConsulta.DataMax)" />
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <input type="submit" class="btn btn-success" value="Filtrar dashboard" />
+            </div>
+
+        </div>
+
+    </EditForm>
+
+    <!-- CARDS DO DASHBOARD -->
+
+    <div class="row mt-3">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3 shadow">
+                <div class="card-body text-center">
+                    <h5>Total de tarefas</h5>
+                    <h2>@dashboard.TotalTarefas</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-3 shadow">
+                <div class="card-body text-center">
+                    <h5>Prioridade Alta</h5>
+                    <h2>@dashboard.TotalPrioridadeAlta</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3 shadow">
+                <div class="card-body text-center">
+                    <h5>Prioridade Média</h5>
+                    <h2>@dashboard.TotalPrioridadeMedia</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3 shadow">
+                <div class="card-body text-center">
+                    <h5>Prioridade Baixa</h5>
+                    <h2>@dashboard.TotalPrioridadeBaixa</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
 
 @code {
 
+    //Dados
+    private DashboardDto dashboard = new();
+
+    // formulário
+    private ConsultaTarefasForm formConsulta = new();
+
+    // dados
+    private List<TarefaDto> tarefas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var hoje = DateTime.Today;
+
+        formConsulta.DataMin = new DateTime(hoje.Year, hoje.Month, 1)
+            .ToString("yyyy-MM-dd");
+
+        formConsulta.DataMax = DateTime.Parse(formConsulta.DataMin).AddMonths(1).AddDays(-1)
+            .ToString("yyyy-MM-dd");
+
+        await Consultar();
+    }
+
+    // consulta
+    protected async Task Consultar()
+    {
+        var dataMin = formConsulta.DataMin;
+        var dataMax = formConsulta.DataMax;
+
+        var response = await Http.GetAsync($"api/tarefas/dashboard/{dataMin}/{dataMax}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var json = await response.Content.ReadAsStringAsync();
+
+            dashboard = JsonConvert.DeserializeObject<DashboardDto>(json) ?? new();
+        }
+    }
 }
